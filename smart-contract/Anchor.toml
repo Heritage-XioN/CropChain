@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-programs = "HLZTDx7agJYyLSSzgqLmnT4PJ1qx8UFkiCxaAHNcBc3W"
+crop-batch = "A5aLLkRbgS6oqSo3ikmc7Dww3dF6BHdp6znDG4uXtv1b"
 
 [provider]
 cluster = "localnet"
