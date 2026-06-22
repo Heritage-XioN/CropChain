@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod tests {
     use crate::state::{BatchState, FarmerState};
-    use crate::{constants::SEED, id};
+    use crate::{
+        constants::{BATCH_SEED, FARMER_SEED},
+        id,
+    };
     use anchor_lang::prelude::*;
 
     // ---------------------------------------------------------------------------
@@ -14,12 +17,12 @@ mod tests {
         let name = "SummerHarvest";
 
         let (batch_pda, bump) = Pubkey::find_program_address(
-            &[b"batch", signer.as_ref(), name.as_bytes()],
+            &[BATCH_SEED, signer.as_ref(), name.as_bytes()],
             &program_id,
         );
 
         let (batch_pda_2, bump_2) = Pubkey::find_program_address(
-            &[b"batch", signer.as_ref(), name.as_bytes()],
+            &[BATCH_SEED, signer.as_ref(), name.as_bytes()],
             &program_id,
         );
 
@@ -36,10 +39,10 @@ mod tests {
         let signer = Pubkey::new_unique();
 
         let (farmer_pda, _) =
-            Pubkey::find_program_address(&[b"farmer", signer.as_ref()], &program_id);
+            Pubkey::find_program_address(&[FARMER_SEED, signer.as_ref()], &program_id);
 
         let (farmer_pda_2, _) =
-            Pubkey::find_program_address(&[b"farmer", signer.as_ref()], &program_id);
+            Pubkey::find_program_address(&[FARMER_SEED, signer.as_ref()], &program_id);
 
         assert_eq!(farmer_pda, farmer_pda_2);
     }
@@ -51,7 +54,7 @@ mod tests {
     fn test_batch_state_space() {
         let name = "SummerHarvest";
         let batch = BatchState {
-            signer: Pubkey::new_unique(),
+            authority: Pubkey::new_unique(),
             bump: 42,
             name: name.to_string(),
         };
@@ -77,7 +80,7 @@ mod tests {
     #[test]
     fn test_batch_state_roundtrip() {
         let original = BatchState {
-            signer: Pubkey::new_unique(),
+            authority: Pubkey::new_unique(),
             bump: 255,
             name: "TestHarvest".to_string(),
         };
@@ -89,7 +92,7 @@ mod tests {
         let mut bytes_slice = bytes.as_slice();
         let deserialized = BatchState::try_deserialize(&mut bytes_slice).unwrap();
 
-        assert_eq!(deserialized.signer, original.signer);
+        assert_eq!(deserialized.authority, original.authority);
         assert_eq!(deserialized.bump, original.bump);
         assert_eq!(deserialized.name, original.name);
     }
@@ -99,8 +102,10 @@ mod tests {
     // ---------------------------------------------------------------------------
     #[test]
     fn test_farmer_state_roundtrip() {
-        let signer_key = Pubkey::new_unique();
-        let original = FarmerState { signer: signer_key };
+        let authority_key = Pubkey::new_unique();
+        let original = FarmerState {
+            authority: authority_key,
+        };
 
         let mut bytes = Vec::new();
         original.try_serialize(&mut bytes).unwrap();
@@ -108,7 +113,30 @@ mod tests {
         let mut bytes_slice = bytes.as_slice();
         let deserialized = FarmerState::try_deserialize(&mut bytes_slice).unwrap();
 
-        assert_eq!(deserialized.signer, signer_key);
+        assert_eq!(deserialized.authority, authority_key);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Account space calculation matches constraint formula — FarmerState
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_farmer_state_space() {
+        let farmer = FarmerState {
+            authority: Pubkey::new_unique(),
+        };
+
+        let mut serialized = Vec::new();
+        farmer.try_serialize(&mut serialized).unwrap();
+        let expected_space = serialized.len();
+
+        // Constraint formula: 8 (discriminator) + 32 (pubkey)
+        let constraint_space = 8 + 32;
+
+        assert_eq!(
+            expected_space, constraint_space,
+            "Account space mismatch: serialized={} vs constraint={}",
+            expected_space, constraint_space
+        );
     }
 
     // ---------------------------------------------------------------------------
@@ -120,12 +148,12 @@ mod tests {
         let signer = Pubkey::new_unique();
 
         let (pda_1, _) = Pubkey::find_program_address(
-            &[b"batch", signer.as_ref(), b"SummerHarvest"],
+            &[BATCH_SEED, signer.as_ref(), b"SummerHarvest"],
             &program_id,
         );
 
         let (pda_2, _) = Pubkey::find_program_address(
-            &[b"batch", signer.as_ref(), b"WinterHarvest"],
+            &[BATCH_SEED, signer.as_ref(), b"WinterHarvest"],
             &program_id,
         );
 
@@ -142,12 +170,12 @@ mod tests {
         let signer_2 = Pubkey::new_unique();
 
         let (pda_1, _) = Pubkey::find_program_address(
-            &[b"batch", signer_1.as_ref(), b"SummerHarvest"],
+            &[BATCH_SEED, signer_1.as_ref(), b"SummerHarvest"],
             &program_id,
         );
 
         let (pda_2, _) = Pubkey::find_program_address(
-            &[b"batch", signer_2.as_ref(), b"SummerHarvest"],
+            &[BATCH_SEED, signer_2.as_ref(), b"SummerHarvest"],
             &program_id,
         );
 
@@ -155,10 +183,15 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
-    // Seed constant
+    // Seed constants
     // ---------------------------------------------------------------------------
     #[test]
-    fn test_seed_constant() {
-        assert_eq!(SEED, "anchor");
+    fn test_farmer_seed_constant() {
+        assert_eq!(FARMER_SEED, b"farmer");
+    }
+
+    #[test]
+    fn test_batch_seed_constant() {
+        assert_eq!(BATCH_SEED, b"batch");
     }
 }
