@@ -19,4 +19,8 @@ pub mod crop_batch {
     pub fn mint_batch(ctx: Context<MintBatchCtx>, name: String) -> Result<()> {
         mint_batch::handler(ctx, name)
     }
+
+    pub fn add_checkpoint(ctx: Context<AddCheckpointCtx>, name: String) -> Result<()> {
+        add_checkpoint::handler(ctx, name)
+    }
 }

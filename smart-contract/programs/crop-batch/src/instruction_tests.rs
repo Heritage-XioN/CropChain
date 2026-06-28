@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::state::{BatchState, FarmerState};
+    use crate::state::{BatchState, CheckpointState, FarmerState};
     use crate::{
-        constants::{BATCH_SEED, FARMER_SEED},
+        constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED},
         id,
     };
     use anchor_lang::prelude::*;
@@ -56,6 +56,7 @@ mod tests {
         let batch = BatchState {
             authority: Pubkey::new_unique(),
             bump: 42,
+            checkpoint_count: 0,
             name: name.to_string(),
         };
 
@@ -64,8 +65,8 @@ mod tests {
         batch.try_serialize(&mut serialized).unwrap();
         let expected_space = serialized.len();
 
-        // Constraint formula: 8 (discriminator) + 32 (pubkey) + 1 (u8) + (4 + string len)
-        let constraint_space = 8 + 32 + 1 + (4 + name.len());
+        // Constraint formula: 8 (discriminator) + 32 (pubkey) + 1 (u8) + 8 (u64 checkpoint_count) + (4 + string len)
+        let constraint_space = 8 + 32 + 1 + 8 + (4 + name.len());
 
         assert_eq!(
             expected_space, constraint_space,
@@ -82,6 +83,7 @@ mod tests {
         let original = BatchState {
             authority: Pubkey::new_unique(),
             bump: 255,
+            checkpoint_count: 123,
             name: "TestHarvest".to_string(),
         };
 
@@ -95,6 +97,7 @@ mod tests {
         assert_eq!(deserialized.authority, original.authority);
         assert_eq!(deserialized.bump, original.bump);
         assert_eq!(deserialized.name, original.name);
+        assert_eq!(deserialized.checkpoint_count, original.checkpoint_count);
     }
 
     // ---------------------------------------------------------------------------
@@ -183,6 +186,91 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
+    // Checkpoint PDA derivation
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_checkpoint_pda_derivation() {
+        let program_id = id();
+        let batch_account = Pubkey::new_unique();
+        let checkpoint_index: u64 = 0;
+
+        let (checkpoint_pda, bump) = Pubkey::find_program_address(
+            &[
+                CHECKPOINT_SEED,
+                batch_account.as_ref(),
+                &checkpoint_index.to_le_bytes(),
+            ],
+            &program_id,
+        );
+
+        let (checkpoint_pda_2, bump_2) = Pubkey::find_program_address(
+            &[
+                CHECKPOINT_SEED,
+                batch_account.as_ref(),
+                &checkpoint_index.to_le_bytes(),
+            ],
+            &program_id,
+        );
+
+        assert_eq!(checkpoint_pda, checkpoint_pda_2);
+        assert_eq!(bump, bump_2);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Account space calculation matches constraint formula — CheckpointState
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_checkpoint_state_space() {
+        let name = "DistributionCenter";
+        let checkpoint = CheckpointState {
+            authority: Pubkey::new_unique(),
+            batch: Pubkey::new_unique(),
+            index: 42,
+            bump: 254,
+            name: name.to_string(),
+        };
+
+        let mut serialized = Vec::new();
+        checkpoint.try_serialize(&mut serialized).unwrap();
+        let expected_space = serialized.len();
+
+        // Constraint formula: 8 (discriminator) + 32 (pubkey authority) + 32 (pubkey batch) + 8 (u64 index) + 1 (u8 bump) + (4 + string len)
+        let constraint_space = 8 + 32 + 32 + 8 + 1 + (4 + name.len());
+
+        assert_eq!(
+            expected_space, constraint_space,
+            "Account space mismatch: serialized={} vs constraint={}",
+            expected_space, constraint_space
+        );
+    }
+
+    // ---------------------------------------------------------------------------
+    // CheckpointState serialize / deserialize round-trip
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_checkpoint_state_roundtrip() {
+        let original = CheckpointState {
+            authority: Pubkey::new_unique(),
+            batch: Pubkey::new_unique(),
+            index: 10,
+            bump: 253,
+            name: "ShipmentDeparted".to_string(),
+        };
+
+        let mut bytes = Vec::new();
+        original.try_serialize(&mut bytes).unwrap();
+
+        let mut bytes_slice = bytes.as_slice();
+        let deserialized = CheckpointState::try_deserialize(&mut bytes_slice).unwrap();
+
+        assert_eq!(deserialized.authority, original.authority);
+        assert_eq!(deserialized.batch, original.batch);
+        assert_eq!(deserialized.index, original.index);
+        assert_eq!(deserialized.bump, original.bump);
+        assert_eq!(deserialized.name, original.name);
+    }
+
+    // ---------------------------------------------------------------------------
     // Seed constants
     // ---------------------------------------------------------------------------
     #[test]
@@ -193,5 +281,10 @@ mod tests {
     #[test]
     fn test_batch_seed_constant() {
         assert_eq!(BATCH_SEED, b"batch");
+    }
+
+    #[test]
+    fn test_checkpoint_seed_constant() {
+        assert_eq!(CHECKPOINT_SEED, b"checkpoint");
     }
 }
