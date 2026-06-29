@@ -70,6 +70,49 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
+    // update credit score
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_update_score_logic() {
+        let mut credit_account = CreditAccount {
+            farmer: Pubkey::new_unique(),
+            score: 50,
+            bump: 254,
+        };
+
+        // 1. Small trade value: trade_value = 500
+        // Base increment = 10
+        // Bonus = (500 / 1000).min(100) = 0
+        // Total = 10. New score = 50 + 10 = 60
+        let base_increment = 10u64;
+        let trade_value_1 = 500u64;
+        let bonus_1 = (trade_value_1 / 1000).min(100);
+        let increment_1 = base_increment + bonus_1;
+        credit_account.score += increment_1;
+        assert_eq!(credit_account.score, 60);
+
+        // 2. Large trade value: trade_value = 50,000
+        // Base increment = 10
+        // Bonus = (50000 / 1000).min(100) = 50
+        // Total = 60. New score = 60 + 60 = 120
+        let trade_value_2 = 50000u64;
+        let bonus_2 = (trade_value_2 / 1000).min(100);
+        let increment_2 = base_increment + bonus_2;
+        credit_account.score += increment_2;
+        assert_eq!(credit_account.score, 120);
+
+        // 3. Huge trade value (exceeds cap): trade_value = 500,000
+        // Base increment = 10
+        // Bonus = (500000 / 1000).min(100) = 100 (capped!)
+        // Total = 110. New score = 120 + 110 = 230
+        let trade_value_3 = 500000u64;
+        let bonus_3 = (trade_value_3 / 1000).min(100);
+        let increment_3 = base_increment + bonus_3;
+        credit_account.score += increment_3;
+        assert_eq!(credit_account.score, 230);
+    }
+
+    // ---------------------------------------------------------------------------
     // Seed constants
     // ---------------------------------------------------------------------------
     #[test]

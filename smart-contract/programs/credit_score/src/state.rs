@@ -33,3 +33,23 @@ pub struct CreditAccount {
     /// bump seed
     pub bump: u8, // 1 byte
 }
+
+#[derive(Accounts)]
+pub struct UpdateScoreCtx<'info> {
+    /// The authority (e.g., trade escrow program PDA or authorized signer)
+    pub authority: Signer<'info>,
+
+    /// CHECK: The farmer key whom the credit account belongs to
+    pub farmer: UncheckedAccount<'info>,
+
+    /// The credit account PDA to update
+    #[account(
+        mut,
+        seeds = [
+            CREDIT_ACCOUNT_SEED,
+            farmer.key().as_ref(),
+        ],
+        bump = credit_account.bump,
+    )]
+    pub credit_account: Account<'info, CreditAccount>,
+}

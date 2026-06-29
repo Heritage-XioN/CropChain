@@ -1,3 +1,5 @@
+#![allow(clippy::diverging_sub_expression)]
+
 pub mod constants;
 pub mod error;
 pub mod instruction_tests;
@@ -17,6 +19,10 @@ pub mod credit_score {
     use super::*;
 
     pub fn initialize_credit(ctx: Context<InitializeCredit>) -> Result<()> {
-        initialize_credit::handler(ctx)
+        initialize_credit::handle_initialize_credit(ctx)
+    }
+
+    pub fn update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Result<()> {
+        update_score::handle_update_score(ctx, trade_value)
     }
 }
