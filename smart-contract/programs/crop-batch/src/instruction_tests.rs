@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use crate::state::{BatchState, BatchStatus, CheckpointState, FarmerState};
+    use crate::state::{
+        BatchState, BatchStatus, CheckpointState, FarmerState, LogisticsPartnerState,
+    };
     use crate::{
-        constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED},
+        constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED, LOGISTICS_PARTNER_SEED},
         id,
     };
     use anchor_lang::prelude::*;
@@ -325,6 +327,76 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
+    // LogisticsPartnerState PDA derivation
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_logistics_partner_pda_derivation() {
+        let program_id = id();
+        let farmer = Pubkey::new_unique();
+        let partner = Pubkey::new_unique();
+
+        let (partner_pda, bump) = Pubkey::find_program_address(
+            &[LOGISTICS_PARTNER_SEED, farmer.as_ref(), partner.as_ref()],
+            &program_id,
+        );
+
+        let (partner_pda_2, bump_2) = Pubkey::find_program_address(
+            &[LOGISTICS_PARTNER_SEED, farmer.as_ref(), partner.as_ref()],
+            &program_id,
+        );
+
+        assert_eq!(partner_pda, partner_pda_2);
+        assert_eq!(bump, bump_2);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Account space calculation matches constraint formula — LogisticsPartnerState
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_logistics_partner_state_space() {
+        let partner_state = LogisticsPartnerState {
+            farmer: Pubkey::new_unique(),
+            partner: Pubkey::new_unique(),
+            bump: 255,
+        };
+
+        let mut serialized = Vec::new();
+        partner_state.try_serialize(&mut serialized).unwrap();
+        let expected_space = serialized.len();
+
+        // Constraint formula: 8 (discriminator) + 32 (pubkey farmer) + 32 (pubkey partner) + 1 (u8 bump)
+        let constraint_space = 8 + 32 + 32 + 1;
+
+        assert_eq!(
+            expected_space, constraint_space,
+            "Account space mismatch: serialized={} vs constraint={}",
+            expected_space, constraint_space
+        );
+    }
+
+    // ---------------------------------------------------------------------------
+    // LogisticsPartnerState serialize / deserialize round-trip
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_logistics_partner_state_roundtrip() {
+        let original = LogisticsPartnerState {
+            farmer: Pubkey::new_unique(),
+            partner: Pubkey::new_unique(),
+            bump: 42,
+        };
+
+        let mut bytes = Vec::new();
+        original.try_serialize(&mut bytes).unwrap();
+
+        let mut bytes_slice = bytes.as_slice();
+        let deserialized = LogisticsPartnerState::try_deserialize(&mut bytes_slice).unwrap();
+
+        assert_eq!(deserialized.farmer, original.farmer);
+        assert_eq!(deserialized.partner, original.partner);
+        assert_eq!(deserialized.bump, original.bump);
+    }
+
+    // ---------------------------------------------------------------------------
     // Seed constants
     // ---------------------------------------------------------------------------
     #[test]
@@ -340,5 +412,10 @@ mod tests {
     #[test]
     fn test_checkpoint_seed_constant() {
         assert_eq!(CHECKPOINT_SEED, b"checkpoint");
+    }
+
+    #[test]
+    fn test_logistics_partner_seed_constant() {
+        assert_eq!(LOGISTICS_PARTNER_SEED, b"logistics-partner");
     }
 }

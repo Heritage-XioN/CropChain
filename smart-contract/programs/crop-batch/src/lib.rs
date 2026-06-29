@@ -30,6 +30,17 @@ pub mod crop_batch {
         update_status::handler(ctx, new_status)
     }
 
+    pub fn register_logistics_partner(
+        ctx: Context<RegisterLogisticsPartnerCtx>,
+        partner: Pubkey,
+    ) -> Result<()> {
+        register_logistics_partner::handler(ctx, partner)
+    }
+
+    pub fn deregister_logistics_partner(ctx: Context<DeregisterLogisticsPartnerCtx>) -> Result<()> {
+        deregister_logistics_partner::handler(ctx)
+    }
+
     pub fn close_batch(ctx: Context<CloseBatchCtx>) -> Result<()> {
         close_batch::handler(ctx)
     }

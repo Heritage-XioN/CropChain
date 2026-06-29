@@ -8,3 +8,6 @@ pub const BATCH_SEED: &[u8] = b"batch";
 
 #[constant]
 pub const CHECKPOINT_SEED: &[u8] = b"checkpoint";
+
+#[constant]
+pub const LOGISTICS_PARTNER_SEED: &[u8] = b"logistics-partner";

@@ -1,4 +1,4 @@
-use crate::constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED};
+use crate::constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED, LOGISTICS_PARTNER_SEED};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -74,6 +74,8 @@ pub struct AddCheckpointCtx<'info> {
         bump
     )]
     pub checkpoint_account: Account<'info, CheckpointState>,
+    /// CHECK: Checked dynamically in instruction handler
+    pub partner_state: UncheckedAccount<'info>,
     /// system program required for init
     pub system_program: Program<'info, System>,
 }
@@ -149,4 +151,56 @@ pub struct CloseBatchCtx<'info> {
         constraint = batch_account.status == BatchStatus::Sold @ crate::error::ErrorCode::BatchNotSold,
     )]
     pub batch_account: Account<'info, BatchState>,
+}
+
+#[account]
+pub struct LogisticsPartnerState {
+    /// The farmer who authorized this partner
+    pub farmer: Pubkey, // 32 bytes
+    /// The authorized partner
+    pub partner: Pubkey, // 32 bytes
+    /// bump seed
+    pub bump: u8, // 1 byte
+}
+
+#[derive(Accounts)]
+#[instruction(partner: Pubkey)]
+pub struct RegisterLogisticsPartnerCtx<'info> {
+    /// The farmer (batch authority) who pays for creation
+    #[account(mut)]
+    pub farmer: Signer<'info>,
+    /// The logistics partner state PDA to be created
+    #[account(
+        init,
+        payer = farmer,
+        space = 8 + 32 + 32 + 1,
+        seeds = [
+            LOGISTICS_PARTNER_SEED,
+            farmer.key().as_ref(),
+            partner.as_ref()
+        ],
+        bump
+    )]
+    pub partner_state: Account<'info, LogisticsPartnerState>,
+    /// System program
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DeregisterLogisticsPartnerCtx<'info> {
+    /// The farmer (batch authority) who reclaims the rent
+    #[account(mut)]
+    pub farmer: Signer<'info>,
+    /// The logistics partner state PDA to be closed
+    #[account(
+        mut,
+        close = farmer,
+        seeds = [
+            LOGISTICS_PARTNER_SEED,
+            farmer.key().as_ref(),
+            partner_state.partner.as_ref()
+        ],
+        bump = partner_state.bump,
+    )]
+    pub partner_state: Account<'info, LogisticsPartnerState>,
 }
