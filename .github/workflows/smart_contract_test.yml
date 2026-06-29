@@ -44,7 +44,7 @@ jobs:
 
       - name: Install Solana/Agave CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v3.1.10/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.10/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Install AVM & Anchor CLI
