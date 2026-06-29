@@ -42,12 +42,17 @@ jobs:
         working-directory: ./smart-contract
         run: yarn install --frozen-lockfile
 
-      - name: Set up Solana and Anchor
-        uses: metadaoproject/setup-anchor@v3.1
-        with:
-          anchor-version: "1.0.2"
-          solana-cli-version: "3.1.10"
-          node-version: "22"
+      - name: Install Solana/Agave CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v3.1.10/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install AVM & Anchor CLI
+        run: |
+          cargo install --git https://github.com/solana-foundation/anchor --tag v1.0.2 avm --locked
+          avm install 1.0.2
+          avm use 1.0.2
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
 
       - name: Generate Solana Keypair
         run: |
