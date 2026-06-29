@@ -28,6 +28,11 @@ pub struct MintBatchCtx<'info> {
         bump
     )]
     pub batch_account: Account<'info, BatchState>,
+    /// CHECK: Checked/Initialized via CPI to credit_score program
+    #[account(mut)]
+    pub credit_account: UncheckedAccount<'info>,
+    /// credit score program
+    pub credit_score_program: Program<'info, credit_score::program::CreditScore>,
     /// system program required for init
     pub system_program: Program<'info, System>,
 }

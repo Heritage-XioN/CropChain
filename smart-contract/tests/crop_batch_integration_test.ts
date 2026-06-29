@@ -34,6 +34,12 @@ describe("crop-batch", () => {
     program.programId
   );
 
+  const creditScoreProgramId = new anchor.web3.PublicKey("B3AdtMZWq4K4XHuRjDwv88BqYxg4YYCF6FtKnvuZzoNB");
+  const [creditAccountPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("credit-account"), farmer.publicKey.toBuffer()],
+    creditScoreProgramId
+  );
+
   before(async () => {
     // Airdrop SOL to the logistics partner so they can pay for transaction fees
     const signature = await provider.connection.requestAirdrop(
@@ -54,6 +60,8 @@ describe("crop-batch", () => {
         signer: farmer.publicKey,
         farmer: farmerPda,
         batchAccount: batchPda,
+        creditAccount: creditAccountPda,
+        creditScoreProgram: creditScoreProgramId,
         systemProgram: anchor.web3.SystemProgram.programId,
       } as any)
       .signers([farmer])
@@ -64,6 +72,12 @@ describe("crop-batch", () => {
     assert.equal(batchState.checkpointCount.toString(), "0");
     assert.deepEqual(batchState.status, { active: {} });
     assert.equal(batchState.authority.toBase58(), farmer.publicKey.toBase58());
+
+    // Fetch and verify CreditAccount initialized via CPI
+    const creditScoreProgram = anchor.workspace.CreditScore;
+    const creditState = await creditScoreProgram.account.creditAccount.fetch(creditAccountPda);
+    assert.equal(creditState.farmer.toBase58(), farmer.publicKey.toBase58());
+    assert.equal(creditState.score.toString(), "0");
   });
 
   it("Adds a checkpoint as the farmer (bypasses registry checks)", async () => {
