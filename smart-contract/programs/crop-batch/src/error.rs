@@ -6,4 +6,8 @@ pub enum ErrorCode {
     CustomError,
     #[msg("Invalid state transition")]
     InvalidStateTransition,
+    #[msg("Batch must be sold before closing")]
+    BatchNotSold,
+    #[msg("Unauthorized access")]
+    Unauthorized,
 }

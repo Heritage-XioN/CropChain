@@ -27,4 +27,8 @@ pub mod crop_batch {
     pub fn update_status(ctx: Context<UpdateStatusCtx>, new_status: BatchStatus) -> Result<()> {
         update_status::handler(ctx, new_status)
     }
+
+    pub fn close_batch(ctx: Context<CloseBatchCtx>) -> Result<()> {
+        close_batch::handler(ctx)
+    }
 }

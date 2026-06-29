@@ -274,6 +274,22 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
+    // Mint batch initial status
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_mint_batch_initial_status() {
+        let batch = BatchState {
+            authority: Pubkey::new_unique(),
+            bump: 42,
+            checkpoint_count: 0,
+            status: BatchStatus::Active,
+            name: "InitialBatch".to_string(),
+        };
+        assert_eq!(batch.status, BatchStatus::Active);
+        assert_eq!(batch.checkpoint_count, 0);
+    }
+
+    // ---------------------------------------------------------------------------
     // Batch status transitions
     // ---------------------------------------------------------------------------
     #[test]

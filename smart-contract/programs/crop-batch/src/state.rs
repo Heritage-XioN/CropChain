@@ -135,3 +135,18 @@ pub struct UpdateStatusCtx<'info> {
     )]
     pub batch_account: Account<'info, BatchState>,
 }
+
+#[derive(Accounts)]
+pub struct CloseBatchCtx<'info> {
+    /// farmer who receives the reclaimed rent
+    #[account(mut)]
+    pub farmer: Signer<'info>,
+    /// batch PDA to close
+    #[account(
+        mut,
+        close = farmer,
+        constraint = batch_account.authority == farmer.key() @ crate::error::ErrorCode::Unauthorized,
+        constraint = batch_account.status == BatchStatus::Sold @ crate::error::ErrorCode::BatchNotSold,
+    )]
+    pub batch_account: Account<'info, BatchState>,
+}
