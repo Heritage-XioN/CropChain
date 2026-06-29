@@ -5,7 +5,7 @@ use crate::state::AddCheckpointCtx;
 use anchor_lang::prelude::*;
 
 /// add a new checkpoint account.
-pub fn handler(ctx: Context<AddCheckpointCtx>, name: String) -> Result<()> {
+pub fn handle_add_checkpoint(ctx: Context<AddCheckpointCtx>, name: String) -> Result<()> {
     let signer_key = ctx.accounts.signer.key();
     let batch = &mut ctx.accounts.batch_account;
 

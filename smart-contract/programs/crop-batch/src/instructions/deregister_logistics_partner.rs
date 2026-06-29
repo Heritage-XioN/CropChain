@@ -4,7 +4,9 @@
 use crate::state::DeregisterLogisticsPartnerCtx;
 use anchor_lang::prelude::*;
 
-pub fn handler(ctx: Context<DeregisterLogisticsPartnerCtx>) -> Result<()> {
+pub fn handle_deregister_logistics_partner(
+    ctx: Context<DeregisterLogisticsPartnerCtx>,
+) -> Result<()> {
     let partner_state = &ctx.accounts.partner_state;
 
     msg!(

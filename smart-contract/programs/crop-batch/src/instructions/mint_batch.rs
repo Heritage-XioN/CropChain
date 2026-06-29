@@ -5,7 +5,7 @@ use crate::state::MintBatchCtx;
 use anchor_lang::prelude::*;
 
 /// Mints a new crop batch with the given name.
-pub fn handler(ctx: Context<MintBatchCtx>, name: String) -> Result<()> {
+pub fn handle_mint_batch(ctx: Context<MintBatchCtx>, name: String) -> Result<()> {
     let farmer = &mut ctx.accounts.farmer;
     let is_new_farmer = farmer.authority == Pubkey::default();
     farmer.authority = ctx.accounts.signer.key();
