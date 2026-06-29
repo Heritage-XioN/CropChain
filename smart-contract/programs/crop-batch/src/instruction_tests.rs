@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::state::{BatchState, CheckpointState, FarmerState};
+    use crate::state::{BatchState, BatchStatus, CheckpointState, FarmerState};
     use crate::{
         constants::{BATCH_SEED, CHECKPOINT_SEED, FARMER_SEED},
         id,
@@ -57,6 +57,7 @@ mod tests {
             authority: Pubkey::new_unique(),
             bump: 42,
             checkpoint_count: 0,
+            status: BatchStatus::Checkpoint(42),
             name: name.to_string(),
         };
 
@@ -65,8 +66,8 @@ mod tests {
         batch.try_serialize(&mut serialized).unwrap();
         let expected_space = serialized.len();
 
-        // Constraint formula: 8 (discriminator) + 32 (pubkey) + 1 (u8) + 8 (u64 checkpoint_count) + (4 + string len)
-        let constraint_space = 8 + 32 + 1 + 8 + (4 + name.len());
+        // Constraint formula: 8 (discriminator) + 32 (pubkey) + 1 (u8) + 8 (u64 checkpoint_count) + 9 (enum status) + (4 + string len)
+        let constraint_space = 8 + 32 + 1 + 8 + 9 + (4 + name.len());
 
         assert_eq!(
             expected_space, constraint_space,
@@ -84,6 +85,7 @@ mod tests {
             authority: Pubkey::new_unique(),
             bump: 255,
             checkpoint_count: 123,
+            status: BatchStatus::Checkpoint(999),
             name: "TestHarvest".to_string(),
         };
 
@@ -96,8 +98,9 @@ mod tests {
 
         assert_eq!(deserialized.authority, original.authority);
         assert_eq!(deserialized.bump, original.bump);
-        assert_eq!(deserialized.name, original.name);
         assert_eq!(deserialized.checkpoint_count, original.checkpoint_count);
+        assert_eq!(deserialized.status, original.status);
+        assert_eq!(deserialized.name, original.name);
     }
 
     // ---------------------------------------------------------------------------
@@ -268,6 +271,41 @@ mod tests {
         assert_eq!(deserialized.index, original.index);
         assert_eq!(deserialized.bump, original.bump);
         assert_eq!(deserialized.name, original.name);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Batch status transitions
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_status_transitions() {
+        let active = BatchStatus::Active;
+        let in_transit = BatchStatus::InTransit;
+        let checkpoint = BatchStatus::Checkpoint(0);
+        let sold = BatchStatus::Sold;
+
+        // Valid transitions from Active
+        assert!(active.can_transition_to(&in_transit));
+        assert!(active.can_transition_to(&checkpoint));
+        assert!(active.can_transition_to(&sold));
+        assert!(!active.can_transition_to(&active));
+
+        // Valid transitions from InTransit
+        assert!(in_transit.can_transition_to(&in_transit));
+        assert!(in_transit.can_transition_to(&checkpoint));
+        assert!(in_transit.can_transition_to(&sold));
+        assert!(!in_transit.can_transition_to(&active));
+
+        // Valid transitions from Checkpoint
+        assert!(checkpoint.can_transition_to(&in_transit));
+        assert!(checkpoint.can_transition_to(&BatchStatus::Checkpoint(1)));
+        assert!(checkpoint.can_transition_to(&sold));
+        assert!(!checkpoint.can_transition_to(&active));
+
+        // Invalid transitions from Sold (Sold is terminal)
+        assert!(!sold.can_transition_to(&active));
+        assert!(!sold.can_transition_to(&in_transit));
+        assert!(!sold.can_transition_to(&checkpoint));
+        assert!(!sold.can_transition_to(&sold));
     }
 
     // ---------------------------------------------------------------------------

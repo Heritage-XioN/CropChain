@@ -12,6 +12,8 @@ pub fn handler(ctx: Context<MintBatchCtx>, name: String) -> Result<()> {
     let batch = &mut ctx.accounts.batch_account;
     batch.authority = ctx.accounts.signer.key();
     batch.bump = ctx.bumps.batch_account;
+    batch.checkpoint_count = 0;
+    batch.status = crate::state::BatchStatus::Active;
     batch.name = name;
 
     msg!("Crop batch {} minted by {}", batch.name, batch.authority);

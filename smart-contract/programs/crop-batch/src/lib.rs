@@ -23,4 +23,8 @@ pub mod crop_batch {
     pub fn add_checkpoint(ctx: Context<AddCheckpointCtx>, name: String) -> Result<()> {
         add_checkpoint::handler(ctx, name)
     }
+
+    pub fn update_status(ctx: Context<UpdateStatusCtx>, new_status: BatchStatus) -> Result<()> {
+        update_status::handler(ctx, new_status)
+    }
 }

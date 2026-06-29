@@ -23,7 +23,7 @@ pub struct MintBatchCtx<'info> {
     #[account(
         init,
         payer = signer,
-        space = 8 + 32 + 1 + 8 + (4 + name.len()),
+        space = 8 + 32 + 1 + 8 + 9 + (4 + name.len()),
         seeds = [BATCH_SEED, signer.key().as_ref(), name.as_bytes()],
         bump
     )]
@@ -46,6 +46,8 @@ pub struct BatchState {
     pub bump: u8, // 1 byte
     /// total checkpoints added to this batch
     pub checkpoint_count: u64, // 8 bytes
+    /// current status of the batch
+    pub status: BatchStatus, // 9 bytes
     /// name of the batch
     pub name: String, // 4 bytes + len
 }
@@ -88,4 +90,48 @@ pub struct CheckpointState {
     pub bump: u8, // 1 byte
     /// name of the checkpoint
     pub name: String, // 4 bytes + len
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum BatchStatus {
+    Active,
+    InTransit,
+    Checkpoint(u64),
+    Sold,
+}
+
+impl BatchStatus {
+    pub fn can_transition_to(&self, next: &BatchStatus) -> bool {
+        match (self, next) {
+            // Cannot transition out of Sold
+            (BatchStatus::Sold, _) => false,
+            // Cannot transition to Active
+            (_, BatchStatus::Active) => false,
+            // Normal transitions
+            (
+                BatchStatus::Active,
+                BatchStatus::InTransit | BatchStatus::Checkpoint(_) | BatchStatus::Sold,
+            ) => true,
+            (
+                BatchStatus::InTransit,
+                BatchStatus::InTransit | BatchStatus::Checkpoint(_) | BatchStatus::Sold,
+            ) => true,
+            (
+                BatchStatus::Checkpoint(_),
+                BatchStatus::InTransit | BatchStatus::Checkpoint(_) | BatchStatus::Sold,
+            ) => true,
+        }
+    }
+}
+
+#[derive(Accounts)]
+pub struct UpdateStatusCtx<'info> {
+    /// authority (the farmer / batch authority)
+    pub authority: Signer<'info>,
+    /// batch PDA to update
+    #[account(
+        mut,
+        has_one = authority,
+    )]
+    pub batch_account: Account<'info, BatchState>,
 }

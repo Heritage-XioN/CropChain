@@ -15,6 +15,12 @@ pub fn handler(ctx: Context<AddCheckpointCtx>, name: String) -> Result<()> {
     checkpoint.bump = ctx.bumps.checkpoint_account;
     checkpoint.name = name;
 
+    let next_status = crate::state::BatchStatus::Checkpoint(checkpoint.index);
+    if !batch.status.can_transition_to(&next_status) {
+        return err!(crate::error::ErrorCode::InvalidStateTransition);
+    }
+    batch.status = next_status;
+
     batch.checkpoint_count = batch.checkpoint_count.checked_add(1).unwrap();
 
     msg!(
