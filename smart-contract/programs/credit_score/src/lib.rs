@@ -25,4 +25,8 @@ pub mod credit_score {
     pub fn update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Result<()> {
         update_score::handle_update_score(ctx, trade_value)
     }
+
+    pub fn get_score(ctx: Context<GetScoreCtx>) -> Result<CreditProfile> {
+        get_score::handle_get_score(ctx)
+    }
 }

@@ -53,3 +53,21 @@ pub struct UpdateScoreCtx<'info> {
     )]
     pub credit_account: Account<'info, CreditAccount>,
 }
+
+#[derive(Accounts)]
+pub struct GetScoreCtx<'info> {
+    /// The credit account PDA to read from
+    pub credit_account: Account<'info, CreditAccount>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub struct CreditProfile {
+    pub score: u64,
+    pub eligibility: EligibilityStatus,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
+pub enum EligibilityStatus {
+    Eligible,
+    Ineligible,
+}

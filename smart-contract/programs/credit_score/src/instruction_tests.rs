@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::state::CreditAccount;
+    use crate::state::{CreditAccount, EligibilityStatus};
     use crate::{constants::CREDIT_ACCOUNT_SEED, id};
     use anchor_lang::prelude::*;
 
@@ -110,6 +110,38 @@ mod tests {
         let increment_3 = base_increment + bonus_3;
         credit_account.score += increment_3;
         assert_eq!(credit_account.score, 230);
+    }
+
+    // ---------------------------------------------------------------------------
+    // get score logic test
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_get_score_logic() {
+        // 1. Ineligible case (score < 50)
+        let account_ineligible = CreditAccount {
+            farmer: Pubkey::new_unique(),
+            score: 49,
+            bump: 255,
+        };
+        let status_ineligible = if account_ineligible.score >= 50 {
+            EligibilityStatus::Eligible
+        } else {
+            EligibilityStatus::Ineligible
+        };
+        assert_eq!(status_ineligible, EligibilityStatus::Ineligible);
+
+        // 2. Eligible case (score >= 50)
+        let account_eligible = CreditAccount {
+            farmer: Pubkey::new_unique(),
+            score: 50,
+            bump: 255,
+        };
+        let status_eligible = if account_eligible.score >= 50 {
+            EligibilityStatus::Eligible
+        } else {
+            EligibilityStatus::Ineligible
+        };
+        assert_eq!(status_eligible, EligibilityStatus::Eligible);
     }
 
     // ---------------------------------------------------------------------------
