@@ -6,13 +6,13 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-crop-batch = "A5aLLkRbgS6oqSo3ikmc7Dww3dF6BHdp6znDG4uXtv1b"
+crop_batch = "7M66PRBrpGP2mT1tTUmaENEGaQ3M9VFCtjEAMyemxKMh"
 
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "cargo test"
+test = "cargo test && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [hooks]

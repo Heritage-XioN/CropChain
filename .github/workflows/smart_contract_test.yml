@@ -1,0 +1,73 @@
+name: Test Smart Contract
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            smart-contract/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('smart-contract/programs/crop-batch/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: "smart-contract/yarn.lock"
+
+      - name: Install Yarn Dependencies
+        working-directory: ./smart-contract
+        run: yarn install --frozen-lockfile
+
+      - name: Install Solana/Agave CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.10/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install AVM & Anchor CLI
+        run: |
+          cargo install --git https://github.com/solana-foundation/anchor --tag v1.0.2 avm --locked
+          avm install 1.0.2
+          avm use 1.0.2
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+
+      - name: Generate Solana Keypair
+        run: |
+          mkdir -p ~/.config/solana
+          solana-keygen new --no-bip39-passphrase -o ~/.config/solana/id.json
+          solana config set --keypair ~/.config/solana/id.json
+
+      - name: Rust Code Format Check
+        working-directory: ./smart-contract/programs/crop-batch
+        run: cargo fmt -- --check
+
+      - name: Rust Lint Check (Clippy)
+        working-directory: ./smart-contract/programs/crop-batch
+        run: cargo clippy -- -D warnings
+
+      - name: Run Tests (Unit & Integration)
+        working-directory: ./smart-contract
+        run: anchor test --validator legacy
