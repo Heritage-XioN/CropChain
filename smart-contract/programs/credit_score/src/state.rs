@@ -4,13 +4,16 @@ use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct InitializeCredit<'info> {
     /// signer (the farmer) pays for account creation
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = signer.key() == farmer.key() @ crate::error::ErrorCode::Unauthorized
+    )]
     pub signer: Signer<'info>,
     /// CHECK: The farmer key whom the credit account belongs to
     pub farmer: UncheckedAccount<'info>,
     /// Credit account PDA to initialize
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 32 + 8 + 1, // 8 discriminator + 32 farmer + 8 score + 1 bump
         seeds = [
@@ -50,6 +53,7 @@ pub struct UpdateScoreCtx<'info> {
             farmer.key().as_ref(),
         ],
         bump = credit_account.bump,
+        constraint = credit_account.farmer == farmer.key() @ crate::error::ErrorCode::Unauthorized
     )]
     pub credit_account: Account<'info, CreditAccount>,
 }
