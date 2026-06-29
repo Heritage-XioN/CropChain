@@ -70,4 +70,4 @@ jobs:
 
       - name: Run Tests (Unit & Integration)
         working-directory: ./smart-contract
-        run: anchor test
+        run: anchor test --validator legacy
