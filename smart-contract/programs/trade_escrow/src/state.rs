@@ -7,6 +7,13 @@ pub enum TradeStatus {
     Pending,
     Active,
     Completed,
+    Disputed,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
+pub enum DisputeResolution {
+    RefundBuyer,
+    PayFarmer,
 }
 
 #[account]
@@ -48,7 +55,6 @@ pub struct CreateTradeCtx<'info> {
         bump
     )]
     pub escrow_vault: UncheckedAccount<'info>,
-    /// system program required for init
     pub system_program: Program<'info, System>,
 }
 
@@ -114,5 +120,66 @@ pub struct ConfirmDeliveryCtx<'info> {
     #[account(mut)]
     pub credit_account: UncheckedAccount<'info>,
     pub credit_score_program: Program<'info, credit_score::program::CreditScore>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RaiseDisputeCtx<'info> {
+    pub authority: Signer<'info>,
+    /// The crop batch being traded
+    pub batch_account: Account<'info, BatchState>,
+    /// The trade account PDA to update
+    #[account(
+        mut,
+        seeds = [
+            TRADE_ACCOUNT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump = trade_account.bump,
+        constraint = trade_account.status == TradeStatus::Active @ crate::error::ErrorCode::InvalidTradeStatus,
+        constraint = authority.key() == trade_account.buyer || authority.key() == batch_account.authority @ crate::error::ErrorCode::Unauthorized,
+    )]
+    pub trade_account: Account<'info, TradeAccount>,
+}
+
+#[derive(Accounts)]
+pub struct ResolveDisputeCtx<'info> {
+    pub admin: Signer<'info>,
+    /// The crop batch being traded
+    pub batch_account: Account<'info, BatchState>,
+    /// The trade account PDA to update
+    #[account(
+        mut,
+        seeds = [
+            TRADE_ACCOUNT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump = trade_account.bump,
+        constraint = trade_account.status == TradeStatus::Disputed @ crate::error::ErrorCode::InvalidTradeStatus,
+    )]
+    pub trade_account: Account<'info, TradeAccount>,
+    /// CHECK: Escrow vault PDA which holds the deposited SOL.
+    /// It is derived from the batch_account key.
+    #[account(
+        mut,
+        seeds = [
+            ESCROW_VAULT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump
+    )]
+    pub escrow_vault: UncheckedAccount<'info>,
+    /// CHECK: The farmer key who receives the funds (verified against batch authority)
+    #[account(
+        mut,
+        constraint = batch_account.authority == farmer.key() @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub farmer: UncheckedAccount<'info>,
+    /// CHECK: The buyer who receives refund
+    #[account(
+        mut,
+        constraint = trade_account.buyer == buyer.key() @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub buyer: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }

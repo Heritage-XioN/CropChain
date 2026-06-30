@@ -29,4 +29,12 @@ pub mod trade_escrow {
     pub fn confirm_delivery(ctx: Context<ConfirmDeliveryCtx>) -> Result<()> {
         confirm_delivery::handle_confirm_delivery(ctx)
     }
+
+    pub fn raise_dispute(ctx: Context<RaiseDisputeCtx>) -> Result<()> {
+        raise_dispute::handle_raise_dispute(ctx)
+    }
+
+    pub fn resolve_dispute(ctx: Context<ResolveDisputeCtx>, resolution: DisputeResolution) -> Result<()> {
+        resolve_dispute::handle_resolve_dispute(ctx, resolution)
+    }
 }
