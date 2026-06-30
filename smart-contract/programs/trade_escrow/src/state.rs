@@ -196,3 +196,36 @@ pub struct ResolveDisputeCtx<'info> {
     pub admin_registry_program: Program<'info, admin_registry::program::AdminRegistry>,
     pub system_program: Program<'info, System>,
 }
+
+#[derive(Accounts)]
+pub struct CancelTradeCtx<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+    /// The crop batch being traded
+    pub batch_account: Account<'info, BatchState>,
+    /// The trade account PDA to close
+    #[account(
+        mut,
+        close = buyer,
+        seeds = [
+            TRADE_ACCOUNT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump = trade_account.bump,
+        constraint = trade_account.buyer == buyer.key() @ crate::error::ErrorCode::Unauthorized,
+        constraint = trade_account.status == TradeStatus::Pending @ crate::error::ErrorCode::InvalidTradeStatus,
+    )]
+    pub trade_account: Account<'info, TradeAccount>,
+    /// CHECK: Escrow vault PDA which holds the deposited SOL.
+    /// It is derived from the batch_account key.
+    #[account(
+        mut,
+        seeds = [
+            ESCROW_VAULT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump
+    )]
+    pub escrow_vault: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+}

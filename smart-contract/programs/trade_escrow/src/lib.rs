@@ -37,4 +37,8 @@ pub mod trade_escrow {
     pub fn resolve_dispute(ctx: Context<ResolveDisputeCtx>, resolution: DisputeResolution) -> Result<()> {
         resolve_dispute::handle_resolve_dispute(ctx, resolution)
     }
+
+    pub fn cancel_trade(ctx: Context<CancelTradeCtx>) -> Result<()> {
+        cancel_trade::handle_cancel_trade(ctx)
+    }
 }
