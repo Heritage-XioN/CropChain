@@ -1,21 +1,7 @@
 use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
-use admin_registry::constants::ADMIN_SEED;
-use anchor_lang::prelude::*;
+use crate::constants::TREASURY_PUBKEY;
 use crop_batch::state::BatchState;
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
-pub enum TradeStatus {
-    Pending,
-    Active,
-    Completed,
-    Disputed,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
-pub enum DisputeResolution {
-    RefundBuyer,
-    PayFarmer,
-}
+use anchor_lang::prelude::*;
 
 #[account]
 pub struct TradeAccount {
@@ -73,7 +59,6 @@ pub struct AcceptTradeCtx<'info> {
             batch_account.key().as_ref(),
         ],
         bump = trade_account.bump,
-        constraint = trade_account.batch == batch_account.key() @ crate::error::ErrorCode::Unauthorized,
         constraint = batch_account.authority == farmer.key() @ crate::error::ErrorCode::Unauthorized,
         constraint = trade_account.status == TradeStatus::Pending @ crate::error::ErrorCode::InvalidTradeStatus,
     )]
@@ -82,6 +67,7 @@ pub struct AcceptTradeCtx<'info> {
 
 #[derive(Accounts)]
 pub struct ConfirmDeliveryCtx<'info> {
+    #[account(mut)]
     pub authority: Signer<'info>,
     /// The crop batch being traded
     pub batch_account: Account<'info, BatchState>,
@@ -115,12 +101,14 @@ pub struct ConfirmDeliveryCtx<'info> {
     )]
     pub farmer: UncheckedAccount<'info>,
     /// CHECK: Treasury account receiving the fee
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = treasury.key() == TREASURY_PUBKEY @ crate::error::ErrorCode::Unauthorized
+    )]
     pub treasury: UncheckedAccount<'info>,
     /// CHECK: The credit account PDA to update (owned by credit_score program)
     #[account(mut)]
     pub credit_account: UncheckedAccount<'info>,
-
     /// CHECK: The credit score program config PDA
     #[account(mut)]
     pub credit_config: UncheckedAccount<'info>,
@@ -144,19 +132,20 @@ pub struct RaiseDisputeCtx<'info> {
             batch_account.key().as_ref(),
         ],
         bump = trade_account.bump,
+        constraint = (trade_account.buyer == authority.key() || batch_account.authority == authority.key()) @ crate::error::ErrorCode::Unauthorized,
         constraint = trade_account.status == TradeStatus::Active @ crate::error::ErrorCode::InvalidTradeStatus,
-        constraint = authority.key() == trade_account.buyer || authority.key() == batch_account.authority @ crate::error::ErrorCode::Unauthorized,
     )]
     pub trade_account: Account<'info, TradeAccount>,
 }
 
 #[derive(Accounts)]
 pub struct ResolveDisputeCtx<'info> {
+    #[account(mut)]
     pub admin: Signer<'info>,
-    /// CHECK: Verify that this is a valid admin state account registered in the admin_registry program
+    /// The admin state PDA of the resolving admin to verify they are registered
     #[account(
         seeds = [
-            ADMIN_SEED,
+            b"admin",
             admin.key().as_ref(),
         ],
         seeds::program = admin_registry_program.key(),
@@ -235,4 +224,18 @@ pub struct CancelTradeCtx<'info> {
     )]
     pub escrow_vault: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
+pub enum TradeStatus {
+    Pending,
+    Active,
+    Completed,
+    Disputed,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq)]
+pub enum DisputeResolution {
+    RefundBuyer,
+    PayFarmer,
 }

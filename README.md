@@ -39,7 +39,7 @@ graph TD
 ### 💳 3. `credit_score`
 * **Purpose:** micro-financing eligibility analysis.
 * **Key Features:**
-  * One-time state initialization of `CreditConfig` (`CONFIG_SEED`) which stores the trusted `trade_escrow` program ID dynamically (preventing hardcoded program IDs).
+  * One-time state initialization of `CreditConfig` (`CONFIG_SEED`) which stores the ecological `master_authority` and the trusted `trade_escrow` program ID dynamically (preventing hardcoded program IDs).
   * Evaluates farmer trade transaction history and updates scoring.
   * Dynamically computes and logs farmer credit score and lending eligibility status (`Eligible` vs `Ineligible`).
   * Enforces secure dual-authorization (updates are permitted only if signed by the farmer directly or via an authorized CPI from the verified `trade_escrow` program).

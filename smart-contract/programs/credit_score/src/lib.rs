@@ -24,10 +24,10 @@ pub mod credit_score {
 
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
-        authority: Pubkey,
+        master_authority: Pubkey,
         trusted_trade_escrow: Pubkey,
     ) -> Result<()> {
-        initialize_config::handle_initialize_config(ctx, authority, trusted_trade_escrow)
+        initialize_config::handle_initialize_config(ctx, master_authority, trusted_trade_escrow)
     }
 
     pub fn update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Result<()> {

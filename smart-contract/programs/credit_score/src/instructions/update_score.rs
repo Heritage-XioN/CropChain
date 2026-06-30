@@ -6,6 +6,15 @@ pub fn handle_update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Re
     let farmer = ctx.accounts.farmer.key();
     let batch_account = &ctx.accounts.batch_account;
 
+    // Validate that batch_account authority matches farmer
+    {
+        let data = batch_account.try_borrow_data()?;
+        require!(data.len() >= 40, crate::error::ErrorCode::Unauthorized);
+        let authority_bytes: [u8; 32] = data[8..40].try_into().unwrap();
+        let batch_authority = Pubkey::from(authority_bytes);
+        require!(batch_authority == farmer, crate::error::ErrorCode::Unauthorized);
+    }
+
     let is_farmer = authority == farmer;
     let mut is_authorized = is_farmer;
 

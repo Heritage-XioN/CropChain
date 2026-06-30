@@ -3,20 +3,24 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct CreditConfig {
-    pub authority: Pubkey,
+    pub master_authority: Pubkey,
     pub trusted_trade_escrow: Pubkey,
     pub bump: u8,
 }
 
 #[derive(Accounts)]
+#[instruction(master_authority: Pubkey, trusted_trade_escrow: Pubkey)]
 pub struct InitializeConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = deployer.key() == master_authority @ crate::error::ErrorCode::Unauthorized
+    )]
     pub deployer: Signer<'info>,
 
     #[account(
         init,
         payer = deployer,
-        space = 8 + 32 + 32 + 1, // 8 discriminator + 32 authority + 32 trusted_trade_escrow + 1 bump = 73 bytes
+        space = 8 + 32 + 32 + 1, // 8 discriminator + 32 master_authority + 32 trusted_trade_escrow + 1 bump = 73 bytes
         seeds = [CONFIG_SEED],
         bump
     )]
@@ -78,7 +82,10 @@ pub struct UpdateScoreCtx<'info> {
     pub trade_escrow_program: UncheckedAccount<'info>,
     /// CHECK: The farmer key whom the credit account belongs to
     pub farmer: UncheckedAccount<'info>,
-    /// CHECK: Crop batch account used to verify PDA authority seeds
+    /// CHECK: Crop batch account used to verify PDA authority seeds. Verified owned by crop_batch program.
+    #[account(
+        constraint = batch_account.owner == &crate::constants::CROP_BATCH_PROGRAM_ID @ crate::error::ErrorCode::Unauthorized
+    )]
     pub batch_account: UncheckedAccount<'info>,
     /// The credit account PDA to update
     #[account(

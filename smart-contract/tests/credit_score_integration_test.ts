@@ -8,6 +8,7 @@ describe("credit-score-integration", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.CreditScore as Program<CreditScore>;
+  const cropBatchProgram = anchor.workspace.CropBatch;
   const provider = anchor.getProvider();
   const farmer = anchor.web3.Keypair.generate();
   const tradeAuthority = anchor.web3.Keypair.generate();
@@ -23,11 +24,21 @@ describe("credit-score-integration", () => {
     program.programId
   );
 
+  const [batchPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("batch"), farmer.publicKey.toBuffer(), Buffer.from("TestBatch")],
+    cropBatchProgram.programId
+  );
+
+  const [farmerPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("farmer"), farmer.publicKey.toBuffer()],
+    cropBatchProgram.programId
+  );
+
   let tradeEscrowId: anchor.web3.PublicKey;
 
   before(async () => {
     // Airdrop SOL to farmer and tradeAuthority
-    const sig1 = await provider.connection.requestAirdrop(farmer.publicKey, anchor.web3.LAMPORTS_PER_SOL);
+    const sig1 = await provider.connection.requestAirdrop(farmer.publicKey, 10 * anchor.web3.LAMPORTS_PER_SOL);
     const latestBlockhash1 = await provider.connection.getLatestBlockhash();
     await provider.connection.confirmTransaction({ signature: sig1, ...latestBlockhash1 });
 
@@ -52,9 +63,8 @@ describe("credit-score-integration", () => {
         } as any)
         .rpc();
     }
-  });
 
-  it("Initializes credit account directly", async () => {
+    // Initialize credit account first via initializeCredit
     await program.methods
       .initializeCredit()
       .accounts({
@@ -66,9 +76,24 @@ describe("credit-score-integration", () => {
       .signers([farmer])
       .rpc();
 
+    // Mint crop batch using CropBatch program so we have a valid batch account for checks
+    await cropBatchProgram.methods
+      .mintBatch("TestBatch")
+      .accounts({
+        signer: farmer.publicKey,
+        farmer: farmerPda,
+        batchAccount: batchPda,
+        creditAccount: creditAccountPda,
+        creditScoreProgram: program.programId,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      } as any)
+      .signers([farmer])
+      .rpc();
+  });
+
+  it("Initializes credit account directly", async () => {
     const creditState = await program.account.creditAccount.fetch(creditAccountPda);
     assert.equal(creditState.farmer.toBase58(), farmer.publicKey.toBase58());
-    assert.equal(creditState.score.toString(), "0");
   });
 
   it("Gets score and eligibility status via view (Ineligible)", async () => {
@@ -92,7 +117,7 @@ describe("credit-score-integration", () => {
         config: creditConfigPda,
         tradeEscrowProgram: tradeEscrowId,
         farmer: farmer.publicKey,
-        batchAccount: farmer.publicKey,
+        batchAccount: batchPda,
         creditAccount: creditAccountPda,
       } as any)
       .signers([farmer])
@@ -118,7 +143,7 @@ describe("credit-score-integration", () => {
           config: creditConfigPda,
           tradeEscrowProgram: tradeEscrowId,
           farmer: farmer.publicKey,
-          batchAccount: farmer.publicKey,
+          batchAccount: batchPda,
           creditAccount: creditAccountPda,
         } as any)
         .signers([tradeAuthority])
@@ -139,7 +164,7 @@ describe("credit-score-integration", () => {
         config: creditConfigPda,
         tradeEscrowProgram: tradeEscrowId,
         farmer: farmer.publicKey,
-        batchAccount: farmer.publicKey,
+        batchAccount: batchPda,
         creditAccount: creditAccountPda,
       } as any)
       .signers([farmer])

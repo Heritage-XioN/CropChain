@@ -16,7 +16,7 @@ describe("trade-escrow-integration", () => {
 
   const farmer = anchor.web3.Keypair.generate();
   const buyer = anchor.web3.Keypair.generate();
-  const treasury = anchor.web3.Keypair.generate();
+  const treasury = new anchor.web3.PublicKey("Treasury11111111111111111111111111111111111");
   const batchName = "Valencia Oranges";
 
   // Derive Crop Batch PDA
@@ -179,7 +179,7 @@ describe("trade-escrow-integration", () => {
           tradeAccount: tradeAccountPda,
           escrowVault: escrowVaultPda,
           farmer: farmerPda,
-          treasury: treasury.publicKey,
+          treasury: treasury,
           creditAccount: creditAccountPda,
           creditConfig: creditConfigPda,
           tradeEscrowProgram: tradeEscrowProgram.programId,
@@ -197,7 +197,7 @@ describe("trade-escrow-integration", () => {
 
   it("Buyer confirms delivery successfully (releases SOL and updates credit score)", async () => {
     const initialFarmerBalance = await provider.connection.getBalance(farmer.publicKey);
-    const initialTreasuryBalance = await provider.connection.getBalance(treasury.publicKey);
+    const initialTreasuryBalance = await provider.connection.getBalance(treasury);
 
     // Call confirmDelivery
     await tradeEscrowProgram.methods
@@ -207,7 +207,7 @@ describe("trade-escrow-integration", () => {
         tradeAccount: tradeAccountPda,
         escrowVault: escrowVaultPda,
         farmer: farmer.publicKey, // farmer key receiving funds
-        treasury: treasury.publicKey,
+        treasury: treasury,
         creditAccount: creditAccountPda,
         creditConfig: creditConfigPda,
         tradeEscrowProgram: tradeEscrowProgram.programId,
@@ -226,7 +226,7 @@ describe("trade-escrow-integration", () => {
     // 1% fee = 15,000,000 lamports
     // 99% farmer = 1,485,000,000 lamports
     const finalFarmerBalance = await provider.connection.getBalance(farmer.publicKey);
-    const finalTreasuryBalance = await provider.connection.getBalance(treasury.publicKey);
+    const finalTreasuryBalance = await provider.connection.getBalance(treasury);
 
     assert.equal(
       (finalFarmerBalance - initialFarmerBalance).toString(),
@@ -251,7 +251,7 @@ describe("trade-escrow-integration", () => {
           tradeAccount: tradeAccountPda,
           escrowVault: escrowVaultPda,
           farmer: farmer.publicKey,
-          treasury: treasury.publicKey,
+          treasury: treasury,
           creditAccount: creditAccountPda,
           creditConfig: creditConfigPda,
           tradeEscrowProgram: tradeEscrowProgram.programId,

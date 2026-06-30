@@ -14,11 +14,14 @@ pub struct AdminState {
 }
 
 #[derive(Accounts)]
+#[instruction(master_authority: Pubkey)]
 pub struct InitializeCtx<'info> {
-    /// deployer key
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = deployer.key() == master_authority @ crate::error::ErrorCode::Unauthorized
+    )]
     pub deployer: Signer<'info>,
-    /// config account for creating master authority
+
     #[account(
         init,
         payer = deployer,
@@ -27,6 +30,7 @@ pub struct InitializeCtx<'info> {
         bump
     )]
     pub config: Account<'info, ProgramConfig>,
+
     pub system_program: Program<'info, System>,
 }
 
