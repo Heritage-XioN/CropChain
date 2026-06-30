@@ -397,23 +397,32 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
-    // Seed constants
+    // Verifies the farmer seed constant value.
     // ---------------------------------------------------------------------------
     #[test]
     fn test_farmer_seed_constant() {
         assert_eq!(FARMER_SEED, b"farmer");
     }
 
+    // ---------------------------------------------------------------------------
+    // Verifies the batch seed constant value.
+    // ---------------------------------------------------------------------------
     #[test]
     fn test_batch_seed_constant() {
         assert_eq!(BATCH_SEED, b"batch");
     }
 
+    // ---------------------------------------------------------------------------
+    // Verifies the checkpoint seed constant value.
+    // ---------------------------------------------------------------------------
     #[test]
     fn test_checkpoint_seed_constant() {
         assert_eq!(CHECKPOINT_SEED, b"checkpoint");
     }
 
+    // ---------------------------------------------------------------------------
+    // Verifies the logistics partner seed constant value.
+    // ---------------------------------------------------------------------------
     #[test]
     fn test_logistics_partner_seed_constant() {
         assert_eq!(LOGISTICS_PARTNER_SEED, b"logistics-partner");

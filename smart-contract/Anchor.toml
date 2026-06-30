@@ -6,8 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
+admin_registry = "BaJMP4stm9d7srNjxFJBV5DChSBq2shc47E16sosSpB2"
 credit_score = "B3AdtMZWq4K4XHuRjDwv88BqYxg4YYCF6FtKnvuZzoNB"
 crop_batch = "7M66PRBrpGP2mT1tTUmaENEGaQ3M9VFCtjEAMyemxKMh"
+trade_escrow = "76vg8FiFH3hoT98ntU3Sb5apdZC3fQbr5mzzZLCgw1aF"
 
 [provider]
 cluster = "localnet"
