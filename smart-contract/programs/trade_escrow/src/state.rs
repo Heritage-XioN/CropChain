@@ -1,4 +1,5 @@
 use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
+use admin_registry::constants::ADMIN_SEED;
 use anchor_lang::prelude::*;
 use crop_batch::state::BatchState;
 
@@ -145,6 +146,17 @@ pub struct RaiseDisputeCtx<'info> {
 #[derive(Accounts)]
 pub struct ResolveDisputeCtx<'info> {
     pub admin: Signer<'info>,
+    /// CHECK: Verify that this is a valid admin state account registered in the admin_registry program
+    #[account(
+        seeds = [
+            ADMIN_SEED,
+            admin.key().as_ref(),
+        ],
+        seeds::program = admin_registry_program.key(),
+        bump = admin_state.bump,
+        constraint = admin_state.admin == admin.key() @ crate::error::ErrorCode::Unauthorized,
+    )]
+    pub admin_state: Account<'info, admin_registry::state::AdminState>,
     /// The crop batch being traded
     pub batch_account: Account<'info, BatchState>,
     /// The trade account PDA to update
@@ -181,5 +193,6 @@ pub struct ResolveDisputeCtx<'info> {
         constraint = trade_account.buyer == buyer.key() @ crate::error::ErrorCode::Unauthorized
     )]
     pub buyer: UncheckedAccount<'info>,
+    pub admin_registry_program: Program<'info, admin_registry::program::AdminRegistry>,
     pub system_program: Program<'info, System>,
 }
