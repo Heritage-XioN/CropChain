@@ -41,10 +41,10 @@ pub struct CreditAccount {
 pub struct UpdateScoreCtx<'info> {
     /// The authority (e.g., trade escrow program PDA or authorized signer)
     pub authority: Signer<'info>,
-
     /// CHECK: The farmer key whom the credit account belongs to
     pub farmer: UncheckedAccount<'info>,
-
+    /// CHECK: Crop batch account used to verify PDA authority seeds
+    pub batch_account: UncheckedAccount<'info>,
     /// The credit account PDA to update
     #[account(
         mut,
@@ -54,7 +54,6 @@ pub struct UpdateScoreCtx<'info> {
         ],
         bump = credit_account.bump,
         constraint = credit_account.farmer == farmer.key() @ crate::error::ErrorCode::Unauthorized,
-        constraint = authority.key() == credit_account.farmer @ crate::error::ErrorCode::Unauthorized
     )]
     pub credit_account: Account<'info, CreditAccount>,
 }

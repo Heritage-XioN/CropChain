@@ -1477,6 +1477,7 @@ name = "trade_escrow"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "credit_score",
  "crop-batch",
 ]
 
