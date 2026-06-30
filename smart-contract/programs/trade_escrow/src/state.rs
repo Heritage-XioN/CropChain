@@ -1,3 +1,4 @@
+use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
 use anchor_lang::prelude::*;
 use crop_batch::state::BatchState;
 
@@ -30,7 +31,7 @@ pub struct CreateTradeCtx<'info> {
         payer = buyer,
         space = 8 + 32 + 32 + 8 + 1 + 8 + 1, // 8 discriminator + 32 buyer + 32 batch + 8 amount + 1 status + 8 accepted_at + 1 bump = 90
         seeds = [
-            b"trade-account",
+            TRADE_ACCOUNT_SEED,
             batch_account.key().as_ref(),
         ],
         bump
@@ -41,7 +42,7 @@ pub struct CreateTradeCtx<'info> {
     #[account(
         mut,
         seeds = [
-            b"escrow-vault",
+            ESCROW_VAULT_SEED,
             batch_account.key().as_ref(),
         ],
         bump
@@ -61,7 +62,7 @@ pub struct AcceptTradeCtx<'info> {
     #[account(
         mut,
         seeds = [
-            b"trade-account",
+            TRADE_ACCOUNT_SEED,
             batch_account.key().as_ref(),
         ],
         bump = trade_account.bump,
@@ -70,4 +71,48 @@ pub struct AcceptTradeCtx<'info> {
         constraint = trade_account.status == TradeStatus::Pending @ crate::error::ErrorCode::InvalidTradeStatus,
     )]
     pub trade_account: Account<'info, TradeAccount>,
+}
+
+#[derive(Accounts)]
+pub struct ConfirmDeliveryCtx<'info> {
+    pub authority: Signer<'info>,
+    /// The crop batch being traded
+    pub batch_account: Account<'info, BatchState>,
+    /// The trade account PDA to update
+    #[account(
+        mut,
+        seeds = [
+            TRADE_ACCOUNT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump = trade_account.bump,
+        constraint = trade_account.buyer == authority.key() @ crate::error::ErrorCode::Unauthorized,
+        constraint = trade_account.status == TradeStatus::Active @ crate::error::ErrorCode::InvalidTradeStatus,
+    )]
+    pub trade_account: Account<'info, TradeAccount>,
+    /// CHECK: Escrow vault PDA which holds the deposited SOL.
+    /// It is derived from the batch_account key.
+    #[account(
+        mut,
+        seeds = [
+            ESCROW_VAULT_SEED,
+            batch_account.key().as_ref(),
+        ],
+        bump
+    )]
+    pub escrow_vault: UncheckedAccount<'info>,
+    /// CHECK: The farmer key who receives the funds (verified against batch authority)
+    #[account(
+        mut,
+        constraint = batch_account.authority == farmer.key() @ crate::error::ErrorCode::Unauthorized
+    )]
+    pub farmer: UncheckedAccount<'info>,
+    /// CHECK: Treasury account receiving the fee
+    #[account(mut)]
+    pub treasury: UncheckedAccount<'info>,
+    /// CHECK: The credit account PDA to update (owned by credit_score program)
+    #[account(mut)]
+    pub credit_account: UncheckedAccount<'info>,
+    pub credit_score_program: Program<'info, credit_score::program::CreditScore>,
+    pub system_program: Program<'info, System>,
 }

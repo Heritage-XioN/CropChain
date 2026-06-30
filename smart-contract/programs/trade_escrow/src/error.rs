@@ -8,4 +8,6 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Trade is not in the correct status for this operation.")]
     InvalidTradeStatus,
+    #[msg("Mathematical overflow occurred.")]
+    MathOverflow,
 }

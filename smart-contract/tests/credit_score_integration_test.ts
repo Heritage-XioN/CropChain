@@ -65,6 +65,7 @@ describe("credit-score-integration", () => {
       .accounts({
         authority: farmer.publicKey,
         farmer: farmer.publicKey,
+        batchAccount: farmer.publicKey,
         creditAccount: creditAccountPda,
       } as any)
       .signers([farmer])
@@ -88,6 +89,7 @@ describe("credit-score-integration", () => {
         .accounts({
           authority: tradeAuthority.publicKey,
           farmer: farmer.publicKey,
+          batchAccount: farmer.publicKey,
           creditAccount: creditAccountPda,
         } as any)
         .signers([tradeAuthority])
@@ -106,6 +108,7 @@ describe("credit-score-integration", () => {
       .accounts({
         authority: farmer.publicKey,
         farmer: farmer.publicKey,
+        batchAccount: farmer.publicKey,
         creditAccount: creditAccountPda,
       } as any)
       .signers([farmer])

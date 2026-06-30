@@ -25,4 +25,8 @@ pub mod trade_escrow {
     pub fn accept_trade(ctx: Context<AcceptTradeCtx>) -> Result<()> {
         accept_trade::handle_accept_trade(ctx)
     }
+
+    pub fn confirm_delivery(ctx: Context<ConfirmDeliveryCtx>) -> Result<()> {
+        confirm_delivery::handle_confirm_delivery(ctx)
+    }
 }

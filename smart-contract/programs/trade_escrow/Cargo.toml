@@ -23,6 +23,7 @@ custom-panic = []
 [dependencies]
 anchor-lang = "1.0.2"
 crop-batch = { path = "../crop-batch", features = ["cpi"] }
+credit_score = { path = "../credit_score", features = ["cpi"] }
 
 
 [lints.rust]
