@@ -21,4 +21,8 @@ pub mod trade_escrow {
     pub fn create_trade(ctx: Context<CreateTradeCtx>, amount: u64) -> Result<()> {
         create_trade::handle_create_trade(ctx, amount)
     }
+
+    pub fn accept_trade(ctx: Context<AcceptTradeCtx>) -> Result<()> {
+        accept_trade::handle_accept_trade(ctx)
+    }
 }

@@ -6,6 +6,8 @@ pub fn handle_create_trade(ctx: Context<CreateTradeCtx>, amount: u64) -> Result<
     trade_account.buyer = ctx.accounts.buyer.key();
     trade_account.batch = ctx.accounts.batch_account.key();
     trade_account.amount = amount;
+    trade_account.status = crate::state::TradeStatus::Pending;
+    trade_account.accepted_at = 0;
     trade_account.bump = ctx.bumps.trade_account;
 
     // Perform CPI to transfer SOL from buyer to escrow_vault

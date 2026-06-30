@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
-    use crate::state::TradeAccount;
+    use crate::state::{TradeAccount, TradeStatus};
     use anchor_lang::prelude::*;
 
     // ---------------------------------------------------------------------------
@@ -9,13 +9,15 @@ mod tests {
     // ---------------------------------------------------------------------------
     #[test]
     fn test_trade_account_state_space() {
-        // 8 discriminator + 32 buyer + 32 batch + 8 amount + 1 bump = 81
-        let expected_space = 8 + 32 + 32 + 8 + 1;
+        // 8 discriminator + 32 buyer + 32 batch + 8 amount + 1 status + 8 accepted_at + 1 bump = 90
+        let expected_space = 8 + 32 + 32 + 8 + 1 + 8 + 1;
 
         let trade = TradeAccount {
             buyer: Pubkey::new_unique(),
             batch: Pubkey::new_unique(),
             amount: 1000,
+            status: TradeStatus::Pending,
+            accepted_at: 0,
             bump: 254,
         };
 
@@ -33,6 +35,8 @@ mod tests {
             buyer: Pubkey::new_unique(),
             batch: Pubkey::new_unique(),
             amount: 5000,
+            status: TradeStatus::Active,
+            accepted_at: 1234567890,
             bump: 255,
         };
 
@@ -43,6 +47,8 @@ mod tests {
         assert_eq!(trade.buyer, deserialized.buyer);
         assert_eq!(trade.batch, deserialized.batch);
         assert_eq!(trade.amount, deserialized.amount);
+        assert_eq!(trade.status, deserialized.status);
+        assert_eq!(trade.accepted_at, deserialized.accepted_at);
         assert_eq!(trade.bump, deserialized.bump);
     }
 
