@@ -22,6 +22,14 @@ pub mod credit_score {
         initialize_credit::handle_initialize_credit(ctx)
     }
 
+    pub fn initialize_config(
+        ctx: Context<InitializeConfig>,
+        authority: Pubkey,
+        trusted_trade_escrow: Pubkey,
+    ) -> Result<()> {
+        initialize_config::handle_initialize_config(ctx, authority, trusted_trade_escrow)
+    }
+
     pub fn update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Result<()> {
         update_score::handle_update_score(ctx, trade_value)
     }

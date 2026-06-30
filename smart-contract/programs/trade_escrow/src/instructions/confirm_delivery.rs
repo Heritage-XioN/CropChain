@@ -48,6 +48,8 @@ pub fn handle_confirm_delivery(ctx: Context<ConfirmDeliveryCtx>) -> Result<()> {
     // Call credit_score::update_score via CPI
     let cpi_accounts = credit_score::cpi::accounts::UpdateScoreCtx {
         authority: trade_account.to_account_info(),
+        config: ctx.accounts.credit_config.to_account_info(),
+        trade_escrow_program: ctx.accounts.trade_escrow_program.to_account_info(),
         farmer: ctx.accounts.farmer.to_account_info(),
         batch_account: ctx.accounts.batch_account.to_account_info(),
         credit_account: ctx.accounts.credit_account.to_account_info(),

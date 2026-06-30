@@ -38,6 +38,11 @@ describe("trade-escrow-integration", () => {
     creditScoreProgram.programId
   );
 
+  const [creditConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("config")],
+    creditScoreProgram.programId
+  );
+
   // Derive Trade Escrow PDAs
   const [tradeAccountPda] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("trade-account"), batchPda.toBuffer()],
@@ -58,6 +63,19 @@ describe("trade-escrow-integration", () => {
     const sig2 = await provider.connection.requestAirdrop(buyer.publicKey, 10 * anchor.web3.LAMPORTS_PER_SOL);
     const latestBlockhash2 = await provider.connection.getLatestBlockhash();
     await provider.connection.confirmTransaction({ signature: sig2, ...latestBlockhash2 });
+
+    // Initialize credit_score config if not already initialized
+    const configInfo = await provider.connection.getAccountInfo(creditConfigPda);
+    if (configInfo === null) {
+      await creditScoreProgram.methods
+        .initializeConfig(provider.wallet.publicKey, tradeEscrowProgram.programId)
+        .accounts({
+          deployer: provider.wallet.publicKey,
+          config: creditConfigPda,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        } as any)
+        .rpc();
+    }
 
     // Mint crop batch first (requires farmer setup and credit score CPI)
     await cropBatchProgram.methods
@@ -163,6 +181,8 @@ describe("trade-escrow-integration", () => {
           farmer: farmerPda,
           treasury: treasury.publicKey,
           creditAccount: creditAccountPda,
+          creditConfig: creditConfigPda,
+          tradeEscrowProgram: tradeEscrowProgram.programId,
           creditScoreProgram: creditScoreProgram.programId,
           batchAccount: batchPda,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -189,6 +209,8 @@ describe("trade-escrow-integration", () => {
         farmer: farmer.publicKey, // farmer key receiving funds
         treasury: treasury.publicKey,
         creditAccount: creditAccountPda,
+        creditConfig: creditConfigPda,
+        tradeEscrowProgram: tradeEscrowProgram.programId,
         creditScoreProgram: creditScoreProgram.programId,
         batchAccount: batchPda,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -231,6 +253,8 @@ describe("trade-escrow-integration", () => {
           farmer: farmer.publicKey,
           treasury: treasury.publicKey,
           creditAccount: creditAccountPda,
+          creditConfig: creditConfigPda,
+          tradeEscrowProgram: tradeEscrowProgram.programId,
           creditScoreProgram: creditScoreProgram.programId,
           batchAccount: batchPda,
           systemProgram: anchor.web3.SystemProgram.programId,

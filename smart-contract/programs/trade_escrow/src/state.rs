@@ -120,6 +120,13 @@ pub struct ConfirmDeliveryCtx<'info> {
     /// CHECK: The credit account PDA to update (owned by credit_score program)
     #[account(mut)]
     pub credit_account: UncheckedAccount<'info>,
+
+    /// CHECK: The credit score program config PDA
+    #[account(mut)]
+    pub credit_config: UncheckedAccount<'info>,
+    /// CHECK: The trade escrow program itself (verified to match this program ID)
+    #[account(constraint = trade_escrow_program.key() == crate::id())]
+    pub trade_escrow_program: UncheckedAccount<'info>,
     pub credit_score_program: Program<'info, credit_score::program::CreditScore>,
     pub system_program: Program<'info, System>,
 }

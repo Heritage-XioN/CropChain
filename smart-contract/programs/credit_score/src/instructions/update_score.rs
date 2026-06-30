@@ -10,10 +10,9 @@ pub fn handle_update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Re
     let mut is_authorized = is_farmer;
 
     if !is_authorized {
-        let trade_escrow_program_id = pubkey!("76vg8FiFH3hoT98ntU3Sb5apdZC3fQbr5mzzZLCgw1aF");
         let (expected_trade_pda, _) = Pubkey::find_program_address(
             &[b"trade-account", batch_account.key().as_ref()],
-            &trade_escrow_program_id,
+            &ctx.accounts.trade_escrow_program.key(),
         );
         if authority == expected_trade_pda {
             is_authorized = true;

@@ -28,7 +28,7 @@ module.exports = async function (provider: anchor.AnchorProvider) {
     console.log("Could not read .env file, falling back to provider wallet.");
   }
 
-  // Load admin_registry IDL
+  // 1. Initialize admin_registry ProgramConfig
   const idlPath = path.resolve("target/idl/admin_registry.json");
   if (!fs.existsSync(idlPath)) {
     console.log("Error: admin_registry IDL not found. Please build the program first.");
@@ -38,13 +38,11 @@ module.exports = async function (provider: anchor.AnchorProvider) {
   const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
   const program = new Program(idl, provider);
 
-  // Derive ProgramConfig PDA
   const [configPda] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("config")],
     program.programId
   );
 
-  // Initialize ProgramConfig if not already initialized
   const configInfo = await provider.connection.getAccountInfo(configPda);
   if (configInfo === null) {
     console.log(`Initializing admin_registry ProgramConfig...`);
@@ -59,8 +57,38 @@ module.exports = async function (provider: anchor.AnchorProvider) {
       } as any)
       .rpc();
       
-    console.log("Initialization successful!");
+    console.log("admin_registry Initialization successful!");
   } else {
-    console.log("ProgramConfig is already initialized on this cluster.");
+    console.log("admin_registry ProgramConfig is already initialized on this cluster.");
+  }
+
+  // 2. Initialize credit_score CreditConfig
+  const creditIdlPath = path.resolve("target/idl/credit_score.json");
+  if (fs.existsSync(creditIdlPath)) {
+    const creditIdl = JSON.parse(fs.readFileSync(creditIdlPath, "utf-8"));
+    const creditProgram = new Program(creditIdl, provider);
+
+    const [creditConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      creditProgram.programId
+    );
+
+    const creditConfigInfo = await provider.connection.getAccountInfo(creditConfigPda);
+    if (creditConfigInfo === null) {
+      console.log(`Initializing credit_score ProgramConfig...`);
+      // Deployer is the authority, and trade_escrow program is trusted
+      const tradeEscrowId = new anchor.web3.PublicKey("76vg8FiFH3hoT98ntU3Sb5apdZC3fQbr5mzzZLCgw1aF");
+      await creditProgram.methods
+        .initializeConfig(provider.wallet.publicKey, tradeEscrowId)
+        .accounts({
+          deployer: provider.wallet.publicKey,
+          config: creditConfigPda,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        } as any)
+        .rpc();
+      console.log("credit_score Initialization successful!");
+    } else {
+      console.log("credit_score ProgramConfig is already initialized on this cluster.");
+    }
   }
 }

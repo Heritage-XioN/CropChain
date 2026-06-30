@@ -12,11 +12,18 @@ describe("credit-score-integration", () => {
   const farmer = anchor.web3.Keypair.generate();
   const tradeAuthority = anchor.web3.Keypair.generate();
 
-  // Derive PDA
+  // Derive PDAs
   const [creditAccountPda] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("credit-account"), farmer.publicKey.toBuffer()],
     program.programId
   );
+
+  const [creditConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("config")],
+    program.programId
+  );
+
+  let tradeEscrowId: anchor.web3.PublicKey;
 
   before(async () => {
     // Airdrop SOL to farmer and tradeAuthority
@@ -27,6 +34,24 @@ describe("credit-score-integration", () => {
     const sig2 = await provider.connection.requestAirdrop(tradeAuthority.publicKey, anchor.web3.LAMPORTS_PER_SOL);
     const latestBlockhash2 = await provider.connection.getLatestBlockhash();
     await provider.connection.confirmTransaction({ signature: sig2, ...latestBlockhash2 });
+
+    // Determine trade_escrow program ID
+    tradeEscrowId = anchor.workspace.TradeEscrow 
+      ? anchor.workspace.TradeEscrow.programId 
+      : anchor.web3.Keypair.generate().publicKey;
+
+    // Initialize config if not already initialized
+    const configInfo = await provider.connection.getAccountInfo(creditConfigPda);
+    if (configInfo === null) {
+      await program.methods
+        .initializeConfig(provider.wallet.publicKey, tradeEscrowId)
+        .accounts({
+          deployer: provider.wallet.publicKey,
+          config: creditConfigPda,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        } as any)
+        .rpc();
+    }
   });
 
   it("Initializes credit account directly", async () => {
@@ -64,6 +89,8 @@ describe("credit-score-integration", () => {
       .updateScore(new anchor.BN(15000))
       .accounts({
         authority: farmer.publicKey,
+        config: creditConfigPda,
+        tradeEscrowProgram: tradeEscrowId,
         farmer: farmer.publicKey,
         batchAccount: farmer.publicKey,
         creditAccount: creditAccountPda,
@@ -88,6 +115,8 @@ describe("credit-score-integration", () => {
         .updateScore(new anchor.BN(10000))
         .accounts({
           authority: tradeAuthority.publicKey,
+          config: creditConfigPda,
+          tradeEscrowProgram: tradeEscrowId,
           farmer: farmer.publicKey,
           batchAccount: farmer.publicKey,
           creditAccount: creditAccountPda,
@@ -107,6 +136,8 @@ describe("credit-score-integration", () => {
       .updateScore(new anchor.BN(30000))
       .accounts({
         authority: farmer.publicKey,
+        config: creditConfigPda,
+        tradeEscrowProgram: tradeEscrowId,
         farmer: farmer.publicKey,
         batchAccount: farmer.publicKey,
         creditAccount: creditAccountPda,
