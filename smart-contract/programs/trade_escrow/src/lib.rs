@@ -34,7 +34,10 @@ pub mod trade_escrow {
         raise_dispute::handle_raise_dispute(ctx)
     }
 
-    pub fn resolve_dispute(ctx: Context<ResolveDisputeCtx>, resolution: DisputeResolution) -> Result<()> {
+    pub fn resolve_dispute(
+        ctx: Context<ResolveDisputeCtx>,
+        resolution: DisputeResolution,
+    ) -> Result<()> {
         resolve_dispute::handle_resolve_dispute(ctx, resolution)
     }
 

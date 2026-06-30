@@ -2,9 +2,9 @@
 
 pub mod constants;
 pub mod error;
+pub mod instruction_tests;
 pub mod instructions;
 pub mod state;
-pub mod instruction_tests;
 
 use anchor_lang::prelude::*;
 

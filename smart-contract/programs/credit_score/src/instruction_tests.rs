@@ -145,7 +145,7 @@ mod tests {
     }
 
     // ---------------------------------------------------------------------------
-    // Seed constants
+    // Verifies the credit account seed constant value.
     // ---------------------------------------------------------------------------
     #[test]
     fn test_credit_account_seed_constant() {

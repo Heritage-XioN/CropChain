@@ -91,4 +91,35 @@ mod tests {
 
         assert_eq!(pda, derived);
     }
+
+    // ---------------------------------------------------------------------------
+    // Verifies that the TradeStatus and DisputeResolution enums serialize/deserialize round-trip successfully.
+    // ---------------------------------------------------------------------------
+    #[test]
+    fn test_enums_serialization_roundtrip() {
+        let statuses = vec![
+            TradeStatus::Pending,
+            TradeStatus::Active,
+            TradeStatus::Completed,
+            TradeStatus::Disputed,
+        ];
+        for status in statuses {
+            let mut data = Vec::new();
+            status.serialize(&mut data).unwrap();
+            let deserialized = TradeStatus::deserialize(&mut &data[..]).unwrap();
+            assert_eq!(status, deserialized);
+        }
+
+        let resolutions = vec![
+            crate::state::DisputeResolution::RefundBuyer,
+            crate::state::DisputeResolution::PayFarmer,
+        ];
+        for resolution in resolutions {
+            let mut data = Vec::new();
+            resolution.serialize(&mut data).unwrap();
+            let deserialized =
+                crate::state::DisputeResolution::deserialize(&mut &data[..]).unwrap();
+            assert_eq!(resolution, deserialized);
+        }
+    }
 }
