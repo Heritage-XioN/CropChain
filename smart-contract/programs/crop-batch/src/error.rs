@@ -10,4 +10,6 @@ pub enum ErrorCode {
     BatchNotSold,
     #[msg("Unauthorized access")]
     Unauthorized,
+    #[msg("Mathematical overflow occurred")]
+    MathOverflow,
 }

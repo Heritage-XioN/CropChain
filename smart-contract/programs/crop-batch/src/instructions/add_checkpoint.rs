@@ -47,7 +47,10 @@ pub fn handle_add_checkpoint(ctx: Context<AddCheckpointCtx>, name: String) -> Re
     }
     batch.status = next_status;
 
-    batch.checkpoint_count = batch.checkpoint_count.checked_add(1).unwrap();
+    batch.checkpoint_count = batch
+        .checkpoint_count
+        .checked_add(1)
+        .ok_or(error!(crate::error::ErrorCode::MathOverflow))?;
 
     msg!(
         "Checkpoint added: {} (index {}) to batch {}",
