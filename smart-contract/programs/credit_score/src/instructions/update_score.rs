@@ -9,9 +9,14 @@ pub fn handle_update_score(ctx: Context<UpdateScoreCtx>, trade_value: u64) -> Re
     // Value-based bonus: 1 point per 1,000 lamports/units of trade value, capped at 100 points
     let base_increment = 10u64;
     let value_bonus = (trade_value / 1000).min(100);
-    let total_increment = base_increment.checked_add(value_bonus).unwrap();
+    let total_increment = base_increment
+        .checked_add(value_bonus)
+        .ok_or(error!(crate::error::ErrorCode::MathOverflow))?;
 
-    credit_account.score = credit_account.score.checked_add(total_increment).unwrap();
+    credit_account.score = credit_account
+        .score
+        .checked_add(total_increment)
+        .ok_or(error!(crate::error::ErrorCode::MathOverflow))?;
 
     msg!(
         "Credit score updated for farmer {}. Added: {}, New Score: {}",

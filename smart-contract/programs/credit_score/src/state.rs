@@ -53,7 +53,8 @@ pub struct UpdateScoreCtx<'info> {
             farmer.key().as_ref(),
         ],
         bump = credit_account.bump,
-        constraint = credit_account.farmer == farmer.key() @ crate::error::ErrorCode::Unauthorized
+        constraint = credit_account.farmer == farmer.key() @ crate::error::ErrorCode::Unauthorized,
+        constraint = authority.key() == credit_account.farmer @ crate::error::ErrorCode::Unauthorized
     )]
     pub credit_account: Account<'info, CreditAccount>,
 }

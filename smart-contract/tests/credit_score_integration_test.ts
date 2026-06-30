@@ -63,11 +63,11 @@ describe("credit-score-integration", () => {
     await program.methods
       .updateScore(new anchor.BN(15000))
       .accounts({
-        authority: tradeAuthority.publicKey,
+        authority: farmer.publicKey,
         farmer: farmer.publicKey,
         creditAccount: creditAccountPda,
       } as any)
-      .signers([tradeAuthority])
+      .signers([farmer])
       .rpc();
 
     const profile = await program.methods
@@ -81,17 +81,34 @@ describe("credit-score-integration", () => {
     assert.deepEqual(profile.eligibility, { ineligible: {} });
   });
 
+  it("Fails to update score if signer is not the farmer (Unauthorized)", async () => {
+    try {
+      await program.methods
+        .updateScore(new anchor.BN(10000))
+        .accounts({
+          authority: tradeAuthority.publicKey,
+          farmer: farmer.publicKey,
+          creditAccount: creditAccountPda,
+        } as any)
+        .signers([tradeAuthority])
+        .rpc();
+      assert.fail("Should have failed with Unauthorized error");
+    } catch (err: any) {
+      assert.include(err.message, "Unauthorized");
+    }
+  });
+
   it("Updates score above threshold (Eligible)", async () => {
     // Increment score: base 10 + bonus (30000 / 1000) = 40
     // New score: 25 + 40 = 65 (>= 50)
     await program.methods
       .updateScore(new anchor.BN(30000))
       .accounts({
-        authority: tradeAuthority.publicKey,
+        authority: farmer.publicKey,
         farmer: farmer.publicKey,
         creditAccount: creditAccountPda,
       } as any)
-      .signers([tradeAuthority])
+      .signers([farmer])
       .rpc();
 
     const profile = await program.methods

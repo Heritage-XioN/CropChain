@@ -6,4 +6,6 @@ pub enum ErrorCode {
     CustomError,
     #[msg("The signer is not authorized to perform this operation.")]
     Unauthorized,
+    #[msg("Mathematical overflow occurred.")]
+    MathOverflow,
 }
