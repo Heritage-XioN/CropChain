@@ -6,6 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
+credit_score = "B3AdtMZWq4K4XHuRjDwv88BqYxg4YYCF6FtKnvuZzoNB"
 crop_batch = "7M66PRBrpGP2mT1tTUmaENEGaQ3M9VFCtjEAMyemxKMh"
 
 [provider]

@@ -5,7 +5,7 @@ use crate::error::ErrorCode;
 use crate::state::{BatchStatus, UpdateStatusCtx};
 use anchor_lang::prelude::*;
 
-pub fn handler(ctx: Context<UpdateStatusCtx>, new_status: BatchStatus) -> Result<()> {
+pub fn handle_update_status(ctx: Context<UpdateStatusCtx>, new_status: BatchStatus) -> Result<()> {
     let batch = &mut ctx.accounts.batch_account;
 
     // Validate transition

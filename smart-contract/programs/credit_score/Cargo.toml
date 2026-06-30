@@ -1,12 +1,12 @@
 [package]
-name = "crop-batch"
+name = "credit_score"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "crop_batch"
+name = "credit_score"
 
 [features]
 default = []
@@ -19,9 +19,10 @@ anchor-debug = []
 custom-heap = []
 custom-panic = []
 
+
 [dependencies]
 anchor-lang = { version = "1.0.2", features = ["init-if-needed"] }
-credit_score = { path = "../credit_score", features = ["cpi"] }
+
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

@@ -4,7 +4,7 @@
 use crate::state::CloseBatchCtx;
 use anchor_lang::prelude::*;
 
-pub fn handler(ctx: Context<CloseBatchCtx>) -> Result<()> {
+pub fn handle_close_batch(ctx: Context<CloseBatchCtx>) -> Result<()> {
     let batch = &ctx.accounts.batch_account;
 
     msg!(

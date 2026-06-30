@@ -4,7 +4,10 @@
 use crate::state::RegisterLogisticsPartnerCtx;
 use anchor_lang::prelude::*;
 
-pub fn handler(ctx: Context<RegisterLogisticsPartnerCtx>, partner: Pubkey) -> Result<()> {
+pub fn handle_register_logistics_partner(
+    ctx: Context<RegisterLogisticsPartnerCtx>,
+    partner: Pubkey,
+) -> Result<()> {
     let partner_state = &mut ctx.accounts.partner_state;
     partner_state.farmer = ctx.accounts.farmer.key();
     partner_state.partner = partner;
