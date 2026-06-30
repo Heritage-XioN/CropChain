@@ -1,7 +1,7 @@
-use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
 use crate::constants::TREASURY_PUBKEY;
-use crop_batch::state::BatchState;
+use crate::constants::{ESCROW_VAULT_SEED, TRADE_ACCOUNT_SEED};
 use anchor_lang::prelude::*;
+use crop_batch::state::BatchState;
 
 #[account]
 pub struct TradeAccount {
