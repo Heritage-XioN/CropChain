@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  role       String
+  createdAt  DateTime @default(now())
+
+  wallet   CustodialWallet?
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model CustodialWallet {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  publicKey   String
+  encryptedSk String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Batch {
+  id         String   @id @default(uuid())
+  farmerId   String
+  pda        String   @unique
+  status     String
+  createdAt  DateTime @default(now())
+}
+
+model Trade {
+  id         String   @id @default(uuid())
+  batchId    String
+  txHash     String   @unique
+  status     String
+  createdAt  DateTime @default(now())
+}
+
+model Loan {
+  id         String   @id @default(uuid())
+  userId     String
+  txHash     String   @unique
+  status     String
+  createdAt  DateTime @default(now())
+}
+
+model Event {
+  id         String   @id @default(uuid())
+  program    String
+  txHash     String
+  eventType  String
+  payload    Json
+  createdAt  DateTime @default(now())
+}
